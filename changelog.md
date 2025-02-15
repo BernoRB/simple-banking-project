@@ -1,3 +1,8 @@
+### 0.0.5
+## Transfer balance
+- Added money transfer functionality with POST /transactions/transfer endpoint, allowing users to transfer money to other users with optional description
+- Enhanced transaction tracking to clearly differentiate between sent and received transfers
+
 ### 0.0.4
 ## Add balance
 - Added deposit functionality: users can now deposit money into their accounts via POST /transactions/deposit endpoint
