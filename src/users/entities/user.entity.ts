@@ -1,30 +1,39 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { ApiProperty } from '@nestjs/swagger';
 import { Exclude } from 'class-transformer';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class User {
+  @ApiProperty({ example: 1, description: 'Unique identifier' })
   @PrimaryGeneratedColumn()
   id: number;
 
+  @ApiProperty({ example: 'john_doe', description: 'Unique username' })
   @Column({ unique: true })
   username: string;
 
+  @ApiProperty({ description: 'Hashed password', example: '[hidden]' })
   @Exclude()
   @Column()
   password: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  balance: number;
-
+  @ApiProperty({ example: 'John', description: 'User\'s first name' })
   @Column()
   firstName: string;
 
+  @ApiProperty({ example: 'Doe', description: 'User\'s last name' })
   @Column()
   lastName: string;
 
-  @Column({ unique: true })
+  @ApiProperty({ example: 'john.doe@example.com', description: 'User\'s email' })
+  @Column()
   email: string;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @ApiProperty({ example: 1000, description: 'Account balance' })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  balance: number;
+
+  @ApiProperty({ example: '2024-02-15T18:00:00Z', description: 'Account creation date' })
+  @CreateDateColumn()
   createdAt: Date;
 }

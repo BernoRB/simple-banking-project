@@ -1,3 +1,7 @@
+### 0.0.3
+## Swagger Implementation
+- Added swagger implementation
+
 ### 0.0.2
 ## Auth Implementation
 - Added JWT authentication system
