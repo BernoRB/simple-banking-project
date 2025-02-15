@@ -1,3 +1,8 @@
+### 0.0.4
+## Add balance
+- Added deposit functionality: users can now deposit money into their accounts via POST /transactions/deposit endpoint
+- Implemented transaction history tracking for all deposits
+
 ### 0.0.3
 ## Swagger Implementation
 - Added swagger implementation
