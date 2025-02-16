@@ -33,6 +33,10 @@ export class User {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   balance: number;
 
+  @ApiProperty({ example: 1, description: 'User level for transfer limits', minimum: 1 })
+  @Column({ default: 1 })
+  level: number;
+
   @ApiProperty({ example: '2024-02-15T18:00:00Z', description: 'Account creation date' })
   @CreateDateColumn()
   createdAt: Date;

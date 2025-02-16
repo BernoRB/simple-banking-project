@@ -1,3 +1,8 @@
+### 0.0.7
+## Limits system
+- Added limits system: configurable daily and monthly limits by operation type (transfers, deposits, withdrawal, and any future type) and user level
+- Created endpoints to manage operation types and their limits
+
 ### 0.0.6
 ## Transaction history
 - Added transaction history endpoint (GET /transactions) with filtering capabilities by date and transaction type
