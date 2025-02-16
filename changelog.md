@@ -1,3 +1,7 @@
+### 0.0.6
+## Transaction history
+- Added transaction history endpoint (GET /transactions) with filtering capabilities by date and transaction type
+
 ### 0.0.5
 ## Transfer balance
 - Added money transfer functionality with POST /transactions/transfer endpoint, allowing users to transfer money to other users with optional description

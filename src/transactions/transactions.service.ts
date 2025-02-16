@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Transaction, TransactionType } from './entities/transaction.entity';
 import { User } from '../users/entities/user.entity';
+import { TransactionQueryDto } from './dto/transaction-query.dto';
 
 @Injectable()
 export class TransactionsService {
@@ -64,10 +65,7 @@ export class TransactionsService {
   }
 
   // TRANSFERENCIA
-  async transfer(senderId: number, recipientId: number, amount: number, description?: string): Promise<{
-    senderTransaction: Transaction;
-    recipientTransaction: Transaction;
-  }> {
+  async transfer(senderId: number, recipientId: number, amount: number, description?: string): Promise<{ senderTransaction: Transaction; recipientTransaction: Transaction; }> {
     if (senderId === recipientId) {
       throw new BadRequestException('Cannot transfer to the same account');
     }
@@ -148,4 +146,49 @@ export class TransactionsService {
       await queryRunner.release();
     }
   }
+
+  // HISTORIAL
+  async getTransactionHistory(
+    userId: number,
+    query: TransactionQueryDto
+  ) {
+    const queryBuilder = this.transactionsRepository
+      .createQueryBuilder('transaction')
+      .leftJoinAndSelect('transaction.relatedUser', 'relatedUser')
+      .where('transaction.user.id = :userId', { userId })
+      .orderBy('transaction.createdAt', 'DESC');
+  
+    // Aplicar filtros si existen
+    if (query.type) {
+      queryBuilder.andWhere('transaction.type = :type', { type: query.type });
+    }
+  
+    if (query.startDate) {
+      queryBuilder.andWhere('transaction.createdAt >= :startDate', { 
+        startDate: query.startDate 
+      });
+    }
+  
+    if (query.endDate) {
+      queryBuilder.andWhere('transaction.createdAt <= :endDate', { 
+        endDate: query.endDate 
+      });
+    }
+  
+    const transactions = await queryBuilder.getMany();
+  
+    // Transformar los datos para una mejor respuesta
+    return transactions.map(transaction => ({
+      id: transaction.id,
+      type: transaction.type,
+      amount: transaction.amount,
+      description: transaction.description,
+      createdAt: transaction.createdAt,
+      relatedUser: transaction.relatedUser ? {
+        id: transaction.relatedUser.id,
+        username: transaction.relatedUser.username
+      } : null
+    }));
+  }
+
 }
