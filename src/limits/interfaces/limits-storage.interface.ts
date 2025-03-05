@@ -20,5 +20,7 @@ export interface ILimitsStorage {
     monthlyAccumulated: number;
     isBlocked: boolean;
     blockExpirationDate?: Date;
+    failedAttempts?: number;
+    lastFailedAttempt?: Date;
   } | null>;
 }

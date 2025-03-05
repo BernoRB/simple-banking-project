@@ -4,6 +4,7 @@ import { Repository, DataSource } from 'typeorm';
 import { Transaction, TransactionType } from './entities/transaction.entity';
 import { User } from '../users/entities/user.entity';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
+import { LimitsService } from 'src/limits/limits.service';
 
 @Injectable()
 export class TransactionsService {
@@ -12,7 +13,8 @@ export class TransactionsService {
     private transactionsRepository: Repository<Transaction>,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
-    private dataSource: DataSource
+    private dataSource: DataSource,
+    private limitsService: LimitsService
   ) {}
 
   // DEPOSITO
@@ -26,11 +28,25 @@ export class TransactionsService {
       // Buscamos el usuario y verificamos que exista
       const user = await this.usersRepository.findOne({
         where: { id: userId },
-        select: ['id', 'balance']
+        select: ['id', 'balance', 'level']
       });
 
       if (!user) {
         throw new NotFoundException('User not found');
+      }
+
+      // Verificamos limites
+      const limitCheck = await this.limitsService.checkOperationLimit(
+        userId,
+        'DEPOSIT',
+        amount,
+        user.level
+      );
+  
+      if (!limitCheck.allowed) {
+        throw new BadRequestException(
+          `${limitCheck.reason}`
+        );
       }
 
       // Actualizamos el balance
@@ -78,11 +94,25 @@ export class TransactionsService {
       // Obtener sender con su balance
       const sender = await this.usersRepository.findOne({
         where: { id: senderId },
-        select: ['id', 'balance']
+        select: ['id', 'balance', 'level']
       });
 
       if (!sender) {
         throw new NotFoundException('Sender not found');
+      }
+
+      // Verificamos limites
+      const limitCheck = await this.limitsService.checkOperationLimit(
+        senderId,
+        'TRANSFER',
+        amount,
+        sender.level
+      );
+
+      if (!limitCheck.allowed) {
+        throw new BadRequestException(
+          `${limitCheck.reason}`
+        );
       }
 
       // Verificar que el sender tenga suficiente saldo

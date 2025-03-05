@@ -12,6 +12,9 @@ export class LimitState {
   @ManyToOne(() => OperationType)
   operationType: OperationType;
 
+  @Column({ nullable: true })
+  operationTypeDescription: string;
+
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   dailyAccumulated: number;
 
@@ -24,6 +27,12 @@ export class LimitState {
   @Column()
   isBlocked: boolean;
 
-  @Column()
+  @Column({ nullable: true })
   blockExpirationDate: Date;
+
+  @Column({ default: 0 })
+  failedAttempts: number;
+
+  @Column({ nullable: true })
+  lastFailedAttempt: Date;
 }

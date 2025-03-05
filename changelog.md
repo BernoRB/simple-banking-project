@@ -1,3 +1,8 @@
+### 0.0.8
+## Limits system check
+- Improved limits system with smart blocking: allows operations within limits while blocking after X excessive attempts within N hours
+- Added better tracking for failed attempts with clear user feedback
+
 ### 0.0.7
 ## Limits system
 - Added limits system: configurable daily and monthly limits by operation type (transfers, deposits, withdrawal, and any future type) and user level

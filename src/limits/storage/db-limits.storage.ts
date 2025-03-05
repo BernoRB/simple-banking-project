@@ -9,6 +9,10 @@ import { OperationType } from '../entities/operation-type.entity';
 // Implementacion de limites en db. TODO implementar en redis.
 @Injectable()
 export class DbLimitsStorage implements ILimitsStorage {
+  // Constantes para la lógica de intentos
+  private readonly MAX_FAILED_ATTEMPTS = 3;
+  private readonly FAILED_ATTEMPTS_WINDOW_HOURS = 24;
+
   constructor(
     @InjectRepository(LimitState)
     private limitStateRepo: Repository<LimitState>,
@@ -33,10 +37,11 @@ export class DbLimitsStorage implements ILimitsStorage {
       state = this.limitStateRepo.create({
         userId,
         operationType: type,
+        operationTypeDescription: type.name,
         dailyAccumulated: 0,
         monthlyAccumulated: 0,
         isBlocked: false,
-        blockExpirationDate: new Date()
+        failedAttempts: 0
       });
     }
 
@@ -45,14 +50,22 @@ export class DbLimitsStorage implements ILimitsStorage {
 
   async checkAndUpdateLimits(userId: number, operationType: string, amount: number, userLevel: number): Promise<LimitCheckResult> {
     const state = await this.getOrCreateState(userId, operationType);
+    const now = new Date();
     
     // Si está bloqueado y no expiró, rechazar inmediatamente
-    if (state.isBlocked && state.blockExpirationDate > new Date()) {
+    if (state.isBlocked && state.blockExpirationDate > now) {
       return {
         allowed: false,
-        reason: 'Operation blocked',
+        reason: `Account blocked for exceeding limits repeatedly, try again later.`,
         nextResetDate: state.blockExpirationDate
       };
+    }
+    
+    // Si está bloqueado pero ya expiró, resetear el estado
+    if (state.isBlocked && state.blockExpirationDate <= now) {
+      state.isBlocked = false;
+      state.failedAttempts = 0;
+      await this.limitStateRepo.save(state);
     }
 
     // Obtener límites para el nivel del usuario
@@ -68,7 +81,6 @@ export class DbLimitsStorage implements ILimitsStorage {
     }
 
     // Resetear acumulados si es un nuevo día/mes
-    const now = new Date();
     const lastOp = state.lastOperation || new Date(0);
     
     if (lastOp.getDate() !== now.getDate() || lastOp.getMonth() !== now.getMonth()) {
@@ -78,39 +90,66 @@ export class DbLimitsStorage implements ILimitsStorage {
       state.monthlyAccumulated = 0;
     }
 
-    // Verificar límites
-    if (state.dailyAccumulated + amount > limits.dailyLimit) {
-      state.isBlocked = true;
-      state.blockExpirationDate = new Date(now.setHours(24, 0, 0, 0));
+    // Convertir todos los valores a números
+    const dailyAccumulated = Number(state.dailyAccumulated);
+    const monthlyAccumulated = Number(state.monthlyAccumulated);
+    const dailyLimit = Number(limits.dailyLimit);
+    const monthlyLimit = Number(limits.monthlyLimit);
+    const numericAmount = Number(amount);
+    
+    // Verificar si la operación excede los límites
+    const wouldExceedDailyLimit = dailyAccumulated + numericAmount > dailyLimit;
+    const wouldExceedMonthlyLimit = monthlyAccumulated + numericAmount > monthlyLimit;
+    
+    // Si excede algún límite
+    if (wouldExceedDailyLimit || wouldExceedMonthlyLimit) {
+      // Resetear contador de intentos fallidos si ha pasado la ventana de tiempo
+      if (state.lastFailedAttempt) {
+        const hoursElapsed = (now.getTime() - state.lastFailedAttempt.getTime()) / (1000 * 60 * 60);
+        if (hoursElapsed > this.FAILED_ATTEMPTS_WINDOW_HOURS) {
+          state.failedAttempts = 0;
+        }
+      }
+      
+      // Incrementar contador de intentos fallidos
+      state.failedAttempts += 1;
+      state.lastFailedAttempt = now;
+      
+      // Si ha excedido el número máximo de intentos, bloquear
+      if (state.failedAttempts >= this.MAX_FAILED_ATTEMPTS) {
+        state.isBlocked = true;
+        // Bloquear hasta el día siguiente a las 00:00
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        state.blockExpirationDate = tomorrow;
+        
+        await this.limitStateRepo.save(state);
+        
+        return {
+          allowed: false,
+          reason: `Account blocked for exceeding limits repeatedly, try again later`,
+          nextResetDate: state.blockExpirationDate
+        };
+      }
+      
+      // Guardar el estado actualizado con el intento fallido
       await this.limitStateRepo.save(state);
       
+      // Rechazar la operación pero sin bloquear (doy lugar a que haya habido un error honesto y no un intento de fraude)
       return {
         allowed: false,
-        reason: 'Daily limit exceeded',
-        nextResetDate: state.blockExpirationDate
-      };
+        reason: `Limits exceeded. Try a lower amount.`
+      }
     }
-
-    if (state.monthlyAccumulated + amount > limits.monthlyLimit) {
-      state.isBlocked = true;
-      const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      state.blockExpirationDate = lastDayOfMonth;
-      await this.limitStateRepo.save(state);
-      
-      return {
-        allowed: false,
-        reason: 'Monthly limit exceeded',
-        nextResetDate: state.blockExpirationDate
-      };
-    }
-
+    
+    // La operación está dentro de los límites
     // Actualizar acumulados
-    state.dailyAccumulated += amount;
-    state.monthlyAccumulated += amount;
+    state.dailyAccumulated = dailyAccumulated + numericAmount;
+    state.monthlyAccumulated = monthlyAccumulated + numericAmount;
     state.lastOperation = now;
-    state.isBlocked = false;
     await this.limitStateRepo.save(state);
-
+    
     return { allowed: true };
   }
 
@@ -119,16 +158,19 @@ export class DbLimitsStorage implements ILimitsStorage {
     state.dailyAccumulated = 0;
     state.monthlyAccumulated = 0;
     state.isBlocked = false;
+    state.failedAttempts = 0;
     await this.limitStateRepo.save(state);
   }
 
   async getLimitsState(userId: number, operationType: string) {
     const state = await this.getOrCreateState(userId, operationType);
     return {
-      dailyAccumulated: state.dailyAccumulated,
-      monthlyAccumulated: state.monthlyAccumulated,
+      dailyAccumulated: Number(state.dailyAccumulated),
+      monthlyAccumulated: Number(state.monthlyAccumulated),
       isBlocked: state.isBlocked,
-      blockExpirationDate: state.blockExpirationDate
+      blockExpirationDate: state.blockExpirationDate,
+      failedAttempts: state.failedAttempts,
+      lastFailedAttempt: state.lastFailedAttempt
     };
   }
 }

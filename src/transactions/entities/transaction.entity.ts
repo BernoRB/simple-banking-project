@@ -6,7 +6,7 @@ export enum TransactionType {
   DEPOSIT = 'deposit',
   WITHDRAWAL = 'withdrawal',
   TRANSFER_SENT = 'transfer_sent',
-  TRANSFER_RECEIVED = 'transfer_received'
+  TRANSFER_RECEIVED = 'transfer_received',
 }
 
 @Entity()
