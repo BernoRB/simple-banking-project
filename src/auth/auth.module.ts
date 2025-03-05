@@ -5,16 +5,19 @@ import { JwtModule } from '@nestjs/jwt';
 import { UsersModule } from '../users/users.module';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
     UsersModule,
     PassportModule,
-    JwtModule.register({
-      secret: 'tu-secreto-jwt', // TODO poner en env
-      signOptions: { expiresIn: '1h' },
-    }),
-  ],
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        secret: config.get<string>('JWT_SECRET', 'fallback-secret-for-development'),
+        signOptions: { expiresIn: '1h' },
+      }),
+    }),  ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
 })

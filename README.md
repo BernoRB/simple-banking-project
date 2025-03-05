@@ -1,73 +1,114 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Simple Banking API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+![Version](https://img.shields.io/badge/version-0.0.9-blue)
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+API bancaria simple desarrollada con NestJS que proporciona funcionalidades para gestionar cuentas de usuario, realizar operaciones bancarias (depósitos y transferencias) y aplicar límites operativos (según tipo de usuario y de transacción).
 
-## Description
+## 📋 Contenido
+- [Características](#características-principales)
+- [Tecnologías](#tecnologías-utilizadas)
+- [Instalación](#instalación)
+- [Uso](#uso)
+- [Documentación API](#documentación-api)
+- [Tests](#tests)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
-## Installation
+## ✨ Características Principales
+
+### 👤 Gestión de Usuarios
+- Registro de usuarios con datos personales
+- Autenticación segura mediante JWT
+- Obtención de información de perfiles de usuario
+- Usuarios con diferentes niveles que determinan sus límites operativos
+
+### 💰 Operaciones Bancarias
+- **Depósitos**: Permite a los usuarios ingresar dinero a sus cuentas
+- **Transferencias**: Facilita el envío de dinero entre usuarios con descripción opcional
+- **Historial de transacciones**: Consulta detallada de movimientos con filtrado por fecha y tipo
+
+### 🛡️ Sistema de Límites
+- Configuración de límites diarios y mensuales por tipo de operación
+- Límites diferenciados según el nivel del usuario
+- Sistema inteligente de bloqueo:
+  - Permite operaciones dentro de los límites establecidos
+  - Advierte al usuario cuando intenta exceder sus límites
+  - Bloquea temporalmente después de múltiples intentos de exceder límites
+
+### 🔒 Seguridad
+- Contraseñas almacenadas con hash seguro (bcrypt)
+- Protección de rutas mediante JWT
+- Validación de datos en todas las operaciones
+- Sistema anti-fraude mediante monitoreo de intentos de exceder límites
+
+### 📝 Documentación
+- API completamente documentada con Swagger
+- Endpoints con descripción detallada de parámetros y respuestas
+- Interfaz interactiva para probar la API
+
+## 🛠️ Tecnologías Utilizadas
+- **[NestJS](https://nestjs.com/)**: Framework de backend basado en Node.js
+- **[TypeORM](https://typeorm.io/)**: ORM para manejo de la base de datos
+- **[PostgreSQL](https://www.postgresql.org/)**: Base de datos relacional
+- **[JWT](https://jwt.io/)**: Autenticación mediante tokens
+- **[Class-validator](https://github.com/typestack/class-validator)**: Validación de datos
+- **[Swagger](https://swagger.io/)**: Documentación interactiva de la API
+
+## 🚀 Instalación
 
 ```bash
-$ npm install
+# Clonar el repositorio
+git clone https://github.com/tuusuario/simple-banking-project.git
+
+# Instalar dependencias
+cd simple-banking-project
+npm install
+
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus configuraciones
+
+# Iniciar la aplicación en modo desarrollo
+npm run start:dev
 ```
 
-## Running the app
+## 📖 Uso
+
+Una vez instalada, la API estará disponible en `http://localhost:3000`.
+
+### Ejemplo de flujo básico:
+
+1. Crear un usuario: `POST /users`
+2. Iniciar sesión: `POST /auth/login`
+3. Realizar un depósito: `POST /transactions/deposit`
+4. Transferir dinero: `POST /transactions/transfer`
+5. Ver historial: `GET /transactions`
+
+## 📚 Documentación API
+
+La documentación completa de la API está disponible en Swagger:
+
+```
+http://localhost:3000/api
+```
+
+Desde allí podrás explorar todos los endpoints, ver los formatos de solicitud y respuesta, y probar la API directamente desde el navegador.
+
+## 🧪 Tests
+
+El proyecto incluye una completa suite de tests unitarios y de integración para garantizar la calidad y robustez del código.
+
+### Cobertura de Tests
+
+- **Servicios**: Tests unitarios para todos los servicios principales (usuarios, autenticación, transacciones, límites)
+- **Controladores**: Tests de integración para endpoints críticos
+- **Validaciones**: Tests para reglas de negocio y validaciones
+
+### Ejecutar los Tests
 
 ```bash
-# development
-$ npm run start
+# Ejecutar todos los tests
+npm run test
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# Ejecutar tests con cobertura
+npm run test:cov
 ```
-
-## Test
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).

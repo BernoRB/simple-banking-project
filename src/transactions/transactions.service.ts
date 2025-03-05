@@ -4,7 +4,7 @@ import { Repository, DataSource } from 'typeorm';
 import { Transaction, TransactionType } from './entities/transaction.entity';
 import { User } from '../users/entities/user.entity';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
-import { LimitsService } from 'src/limits/limits.service';
+import { LimitsService } from '../limits/limits.service';
 
 @Injectable()
 export class TransactionsService {

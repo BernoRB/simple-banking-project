@@ -1,3 +1,9 @@
+### 0.0.9
+- Added comprehensive unit test suite covering core services (Users, Auth, Transactions, Limits)
+- Improved code quality and reliability through test coverage
+- Implementation of environment variables
+- Readme updated
+
 ### 0.0.8
 ## Limits system check
 - Improved limits system with smart blocking: allows operations within limits while blocking after X excessive attempts within N hours

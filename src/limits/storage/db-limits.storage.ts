@@ -5,13 +5,14 @@ import { ILimitsStorage, LimitCheckResult } from '../interfaces/limits-storage.i
 import { LimitState } from '../entities/limit-state.entity';
 import { OperationLimit } from '../entities/operation-limit.entity';
 import { OperationType } from '../entities/operation-type.entity';
+import { ConfigService } from '@nestjs/config';
 
 // Implementacion de limites en db. TODO implementar en redis.
 @Injectable()
 export class DbLimitsStorage implements ILimitsStorage {
   // Constantes para la lógica de intentos
-  private readonly MAX_FAILED_ATTEMPTS = 3;
-  private readonly FAILED_ATTEMPTS_WINDOW_HOURS = 24;
+  private readonly maxFailedAttempts: number;
+  private readonly failedAttemptsWindowHours: number;
 
   constructor(
     @InjectRepository(LimitState)
@@ -19,8 +20,12 @@ export class DbLimitsStorage implements ILimitsStorage {
     @InjectRepository(OperationLimit)
     private operationLimitRepo: Repository<OperationLimit>,
     @InjectRepository(OperationType)
-    private operationTypeRepo: Repository<OperationType>
-  ) {}
+    private operationTypeRepo: Repository<OperationType>,
+    private configService: ConfigService
+  ) {
+    this.maxFailedAttempts = this.configService.get<number>('MAX_FAILED_ATTEMPTS', 3);
+    this.failedAttemptsWindowHours = this.configService.get<number>('FAILED_ATTEMPTS_WINDOW_HOURS', 24);
+  }
 
   private async getOrCreateState(userId: number, operationType: string): Promise<LimitState> {
     const type = await this.operationTypeRepo.findOne({ where: { name: operationType } });
@@ -106,7 +111,7 @@ export class DbLimitsStorage implements ILimitsStorage {
       // Resetear contador de intentos fallidos si ha pasado la ventana de tiempo
       if (state.lastFailedAttempt) {
         const hoursElapsed = (now.getTime() - state.lastFailedAttempt.getTime()) / (1000 * 60 * 60);
-        if (hoursElapsed > this.FAILED_ATTEMPTS_WINDOW_HOURS) {
+        if (hoursElapsed > this.failedAttemptsWindowHours) {
           state.failedAttempts = 0;
         }
       }
@@ -116,7 +121,7 @@ export class DbLimitsStorage implements ILimitsStorage {
       state.lastFailedAttempt = now;
       
       // Si ha excedido el número máximo de intentos, bloquear
-      if (state.failedAttempts >= this.MAX_FAILED_ATTEMPTS) {
+      if (state.failedAttempts >= this.maxFailedAttempts) {
         state.isBlocked = true;
         // Bloquear hasta el día siguiente a las 00:00
         const tomorrow = new Date();
