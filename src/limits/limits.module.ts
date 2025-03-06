@@ -20,7 +20,7 @@ import { LimitState } from './entities/limit-state.entity';
     LimitsService,
     DbLimitsStorage
   ],
-  exports: [LimitsService, TypeOrmModule.forFeature([OperationType])]
+  exports: [LimitsService, TypeOrmModule.forFeature([OperationType, OperationLimit])]
 })
 
 export class LimitsModule {}

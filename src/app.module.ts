@@ -7,6 +7,7 @@ import { LimitsModule } from './limits/limits.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { OperationType } from './limits/entities/operation-type.entity';
 import { OperationTypesSeed } from './seeds/operation-types.seed';
+import { OperationLimit } from './limits/entities/operation-limit.entity';
 
 @Module({
   imports: [
@@ -26,12 +27,12 @@ import { OperationTypesSeed } from './seeds/operation-types.seed';
         synchronize: configService.get<string>('NODE_ENV', 'development') === 'development',
       }),
     }),
-    TypeOrmModule.forFeature([OperationType]),
+    TypeOrmModule.forFeature([OperationType, OperationLimit]),
     UsersModule,
     AuthModule,
     TransactionsModule,
     LimitsModule
   ],
-  providers: [OperationTypesSeed],
+  providers: [OperationTypesSeed, OperationLimitsSeed],
 })
 export class AppModule {}
