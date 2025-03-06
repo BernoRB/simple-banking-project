@@ -8,6 +8,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { OperationType } from './limits/entities/operation-type.entity';
 import { OperationTypesSeed } from './seeds/operation-types.seed';
 import { OperationLimit } from './limits/entities/operation-limit.entity';
+import { OperationLimitsSeed } from './seeds/operation-limits.seed';
 
 @Module({
   imports: [
