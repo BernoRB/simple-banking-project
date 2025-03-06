@@ -1,3 +1,6 @@
+### 0.0.10
+- Seed for operation types
+
 ### 0.0.9
 - Added comprehensive unit test suite covering core services (Users, Auth, Transactions, Limits)
 - Improved code quality and reliability through test coverage
